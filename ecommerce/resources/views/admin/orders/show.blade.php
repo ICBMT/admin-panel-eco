@@ -1,305 +1,222 @@
-<x-layouts::app :title="'Order #'.$order->id">
+@extends('layouts.admin')
 
-<div class="mx-auto max-w-6xl space-y-8">
+@section('title', 'Order #' . $order->id)
+@section('page-title', 'Order #ORD-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT))
+@section('page-subtitle', 'Placed on ' . $order->created_at->format('d M Y, h:i A'))
 
-    {{-- Header --}}
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-        <div>
-            <a
-                href="{{ route('admin.orders.index') }}"
-                class="text-sm font-medium text-gray-500 transition hover:text-gray-900"
-            >
-                ← Back to Orders
-            </a>
-
-            <div class="mt-3">
-                <p class="text-sm font-medium text-gray-500">Order</p>
-
-                <h1 class="text-3xl font-bold tracking-tight text-gray-900">
-                    #{{ $order->id }}
-                </h1>
-            </div>
-        </div>
-
+@section('page-actions')
+    <div class="d-flex align-items-center gap-3">
         @php
-            $statusClasses = match ($order->status->value) {
-                'pending' => 'bg-yellow-50 text-yellow-700 ring-yellow-200',
-                'processing' => 'bg-blue-50 text-blue-700 ring-blue-200',
-                'shipped' => 'bg-purple-50 text-purple-700 ring-purple-200',
-                'delivered' => 'bg-green-50 text-green-700 ring-green-200',
-                'cancelled' => 'bg-red-50 text-red-700 ring-red-200',
-                default => 'bg-gray-50 text-gray-700 ring-gray-200',
+            $statusClass = match ($order->status) {
+                \App\Enums\OrderStatus::Delivered => 'success',
+                \App\Enums\OrderStatus::Cancelled => 'failed',
+                default => 'pending',
             };
         @endphp
-
-        <span
-            class="inline-flex w-fit rounded-full px-4 py-2 text-sm font-semibold ring-1 {{ $statusClasses }}"
-        >
-            {{ $order->status->name }}
-        </span>
-
+        <span class="badge-table {{ $statusClass }}">{{ $order->status->name }}</span>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"
+                        class="text-decoration-none text-muted-green">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.orders.index') }}"
+                        class="text-decoration-none text-muted-green">Orders</a></li>
+                <li class="breadcrumb-item active text-main" aria-current="page">#{{ $order->id }}</li>
+            </ol>
+        </nav>
     </div>
+@endsection
 
-    {{-- Order information --}}
-    <div class="grid gap-4 md:grid-cols-3">
+@section('content')
 
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p class="text-sm text-gray-500">Customer</p>
+    <div class="row g-4">
 
-            <p class="mt-2 font-semibold text-gray-900">
-                {{ $order->user->name }}
-            </p>
-
-            <p class="mt-1 text-sm text-gray-500">
-                {{ $order->user->email }}
-            </p>
-        </div>
-
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p class="text-sm text-gray-500">Placed On</p>
-
-            <p class="mt-2 font-semibold text-gray-900">
-                {{ $order->created_at->format('d M Y, h:i A') }}
-            </p>
-        </div>
-
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p class="text-sm text-gray-500">Order Total</p>
-
-            <p class="mt-2 text-xl font-bold text-gray-900">
-                ${{ number_format($order->total, 2) }}
-            </p>
-        </div>
-
-    </div>
-
-    <div class="grid gap-8 lg:grid-cols-[1fr_320px]">
-
-        {{-- Order Items --}}
-        <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-
-            <div class="border-b border-gray-200 px-6 py-5">
-                <h2 class="text-lg font-semibold text-gray-900">
-                    Order Items
-                </h2>
-
-                <p class="mt-1 text-sm text-gray-500">
-                    Products included in this order.
-                </p>
+        <!-- LEFT: Items & Status History -->
+        <div class="col-xl-8 col-lg-7">
+            <!-- Order Items -->
+            <div class="table-card-custom mb-4">
+                <div class="p-4 pb-0">
+                    <h2 class="card-title mb-0">Order Items</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th class="text-end">Line Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($order->items as $item)
+                                <tr>
+                                    <td>
+                                        <div class="table-user-cell">
+                                            @if ($item->product?->image_path)
+                                                <img src="{{ asset('storage/' . $item->product->image_path) }}"
+                                                    alt="{{ $item->product->name }}" class="table-user-avatar"
+                                                    onerror="this.src='{{ asset('assets/images/avatar.png') }}'">
+                                            @else
+                                                <span class="table-user-avatar d-flex align-items-center justify-content-center bg-forest-light text-lime">
+                                                    <i class="bi bi-box-seam"></i>
+                                                </span>
+                                            @endif
+                                            <div>
+                                                <div class="table-user-name">
+                                                    {{ $item->product?->name ?? 'Deleted product' }}
+                                                </div>
+                                                @if ($item->product?->category)
+                                                    <div class="table-user-sub">{{ $item->product->category->name }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="table-amount">${{ number_format($item->price, 2) }}</td>
+                                    <td class="table-product-name">{{ $item->quantity }}</td>
+                                    <td class="table-amount text-end">
+                                        ${{ number_format($item->price * $item->quantity, 2) }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 table-user-sub">No items on this order.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer-control">
+                    <span class="table-pagination-info">Grand Total</span>
+                    <span class="table-amount fs-5">${{ number_format($order->total, 2) }}</span>
+                </div>
             </div>
 
-            <div class="divide-y divide-gray-100">
-
-                @foreach ($order->items as $item)
-
-                    <div class="flex flex-col gap-5 px-6 py-6 sm:flex-row sm:items-center">
-
-                        {{-- Image --}}
-                        <div class="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-
-                            @if ($item->product->image_path)
-
-                                <img
-                                    src="{{ asset('storage/'.$item->product->image_path) }}"
-                                    alt="{{ $item->product->name }}"
-                                    class="h-full w-full object-cover"
-                                >
-
-                            @else
-
-                                <div class="flex h-full items-center justify-center text-xs text-gray-400">
-                                    No image
-                                </div>
-
-                            @endif
-
-                        </div>
-
-                        {{-- Product --}}
-                        <div class="min-w-0 flex-1">
-
-                            <h3 class="font-semibold text-gray-900">
-                                {{ $item->product->name }}
-                            </h3>
-
-                            <p class="mt-1 text-sm text-gray-500">
-                                ${{ number_format($item->price, 2) }} each
-                            </p>
-
-                            <p class="mt-2 text-sm text-gray-500">
-                                Quantity: {{ $item->quantity }}
-                            </p>
-
-                        </div>
-
-                        {{-- Subtotal --}}
-                        <div class="sm:text-right">
-
-                            <p class="text-sm text-gray-500">
-                                Subtotal
-                            </p>
-
-                            <p class="mt-1 text-lg font-bold text-gray-900">
-                                ${{ number_format($item->price * $item->quantity, 2) }}
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                @endforeach
-
-            </div>
-
-        </div>
-
-        {{-- Right Sidebar --}}
-        <div class="space-y-6">
-
-            {{-- Status --}}
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-
-                <h2 class="text-lg font-semibold text-gray-900">
-                    Update Status
-                </h2>
-
-                <p class="mt-1 text-sm text-gray-500">
-                    Change the current order status.
-                </p>
-
-                <form
-                    action="{{ route('admin.orders.update-status', $order) }}"
-                    method="POST"
-                    class="mt-5 space-y-4"
-                >
-                    @csrf
-                    @method('PUT')
-
-                    <select
-                        name="status"
-                        class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
-                    >
-                        @foreach ($order->status::cases() as $status)
-
-                            <option
-                                value="{{ $status->value }}"
-                                @selected($order->status === $status)
-                            >
-                                {{ $status->name }}
-                            </option>
-
-                        @endforeach
-                    </select>
-
-                    <button
-                        type="submit"
-                        class="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-                    >
-                        Update Status
-                    </button>
-
-                </form>
-
-            </div>
-
-            {{-- Status History --}}
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-
-                <h2 class="text-lg font-semibold text-gray-900">
-                    Status History
-                </h2>
-
-                <div class="mt-5 space-y-4">
-
+            <!-- Status History -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Status History</h2>
+                </div>
+                <div class="transaction-list">
                     @forelse ($order->statusHistory->sortByDesc('created_at') as $history)
-
-                        <div class="border-l-2 border-gray-200 pl-4">
-
-                            <p class="font-semibold text-gray-900">
+                        @php
+                            $historyIcon = match ($history->status) {
+                                \App\Enums\OrderStatus::Pending => 'bi-hourglass-split',
+                                \App\Enums\OrderStatus::Processing => 'bi-arrow-repeat',
+                                \App\Enums\OrderStatus::Shipped => 'bi-truck',
+                                \App\Enums\OrderStatus::Delivered => 'bi-check-circle-fill',
+                                \App\Enums\OrderStatus::Cancelled => 'bi-x-circle-fill',
+                            };
+                        @endphp
+                        <div class="transaction-item">
+                            <div
+                                class="transaction-icon {{ $history->status === \App\Enums\OrderStatus::Cancelled ? 'bg-brand-orange text-white' : 'bg-forest-light text-lime' }}">
+                                <i class="bi {{ $historyIcon }}"></i>
+                            </div>
+                            <div class="transaction-info">
+                                <div class="transaction-name">{{ $history->status->name }}</div>
+                                <div class="transaction-date">
+                                    {{ $history->created_at->format('d M Y') }} • {{ $history->created_at->format('h:i A') }}
+                                </div>
+                            </div>
+                            <span class="badge-table {{ $history->status === \App\Enums\OrderStatus::Delivered ? 'success' : ($history->status === \App\Enums\OrderStatus::Cancelled ? 'failed' : 'pending') }}">
                                 {{ $history->status->name }}
-                            </p>
-
-                            <p class="mt-1 text-xs text-gray-500">
-                                Changed:
-                                {{ $history->created_at->format('d M Y, h:i A') }}
-                            </p>
-
+                            </span>
                         </div>
-
                     @empty
-
-                        <p class="text-sm text-gray-500">
-                            No status history available.
-                        </p>
-
+                        <div class="transaction-item">
+                            <div class="transaction-icon bg-forest-light text-lime">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <div class="transaction-info">
+                                <div class="transaction-name">No status history available</div>
+                            </div>
+                        </div>
                     @endforelse
+                </div>
+            </div>
+        </div>
 
+        <!-- RIGHT: Customer, Payment & Actions -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="right-panel-wrapper d-flex flex-column gap-4 h-100">
+
+                <!-- Customer -->
+                <div class="card mb-0">
+                    <div class="card-header mb-1">
+                        <h2 class="card-title">Customer</h2>
+                    </div>
+                    <div class="table-user-cell px-4 pb-3">
+                        <img src="{{ asset('assets/images/user_' . (($order->user->id % 8) + 1) . '.jpg') }}"
+                            alt="{{ $order->user->name }}" class="table-user-avatar"
+                            onerror="this.src='{{ asset('assets/images/avatar.png') }}'">
+                        <div>
+                            <div class="table-user-name">{{ $order->user->name }}</div>
+                            <div class="table-user-sub">{{ $order->user->email }}</div>
+                            <div class="table-user-sub mt-1">
+                                Customer since {{ $order->user->created_at->format('M Y') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment -->
+                <div class="card mb-0">
+                    <div class="card-header mb-1">
+                        <h2 class="card-title">Payment</h2>
+                    </div>
+                    <div class="px-4 pb-4 d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="table-user-sub">Method</span>
+                            <span class="table-product-name">
+                                {{ $order->payment_method === 'stripe' ? 'Card Payment' : 'Cash on Delivery' }}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="table-user-sub">Payment Status</span>
+                            <span class="badge-table {{ $order->payment_status === 'paid' ? 'success' : ($order->payment_status === 'failed' ? 'failed' : 'pending') }}">
+                                {{ ucfirst($order->payment_status) }}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="table-user-sub">Order Total</span>
+                            <span class="table-amount">${{ number_format($order->total, 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="table-user-sub">Last Updated</span>
+                            <span class="table-product-name">{{ $order->updated_at->format('d M Y, h:i A') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Status -->
+                <div class="card flex-grow-1">
+                    <div class="card-header mb-1">
+                        <h2 class="card-title">Update Status</h2>
+                    </div>
+                    <div class="px-4 pb-4">
+                        <p class="table-user-sub mb-3">Change the current order status. The customer is notified by
+                            email on every change.</p>
+                        <form action="{{ route('admin.orders.update-status', $order) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <label for="status" class="form-label-custom">Order Status</label>
+                            <select name="status" id="status" class="form-select-custom mb-3">
+                                @foreach ($order->status::cases() as $status)
+                                    <option value="{{ $status->value }}" @selected($order->status === $status)>
+                                        {{ $status->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <button type="submit" class="btn-custom btn-custom-primary w-100">
+                                <i class="bi bi-check2-circle me-1"></i> Update Status
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
             </div>
-
-            {{-- Summary --}}
-            <div class="rounded-2xl border border-gray-200 bg-gray-50 p-6">
-
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-500">Items</span>
-
-                    <span class="font-medium text-gray-900">
-                        {{ $order->items->sum('quantity') }}
-                    </span>
-                </div>
-
-                <div class="mt-3 flex justify-between text-sm">
-                    <span class="text-gray-500">Shipping</span>
-
-                    <span class="font-medium text-green-600">
-                        Free
-                    </span>
-                </div>
-
-                <div class="mt-4 border-t border-gray-200 pt-4">
-
-                    <div class="flex items-center justify-between">
-
-                        <span class="font-semibold text-gray-900">
-                            Total
-                        </span>
-
-                        <span class="text-xl font-bold text-gray-900">
-                            ${{ number_format($order->total, 2) }}
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <div>
-                        <p class="text-xs text-gray-500">
-                            Payment Method
-                        </p>
-
-                        <p class="mt-1 text-sm font-semibold text-gray-900">
-                            {{ $order->payment_method === 'stripe' ? 'Card Payment' : 'Cash on Delivery' }}
-                        </p>
-                    </div>
-
-                    <div>
-                        <p class="text-xs text-gray-500">
-                            Payment Status
-                        </p>
-
-                        <p class="mt-1 text-sm font-semibold capitalize text-gray-900">
-                            {{ $order->payment_status }}
-                        </p>
-                    </div>
-
-            </div>
-
         </div>
 
     </div>
 
-</div>
-
-</x-layouts::app>
+@endsection
