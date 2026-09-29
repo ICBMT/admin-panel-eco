@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\ProductsImport;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\ProductsImport;
 
 class ProductImportController extends Controller
 {
-    public function import(Request $request)
+    public function import(Request $request): RedirectResponse
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,xls,ods,csv'],
@@ -20,8 +21,7 @@ class ProductImportController extends Controller
                 new ProductsImport,
                 $request->file('file')
             );
-        } 
-        catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             return redirect()
                 ->route('admin.products.index')
                 ->withErrors($e->errors())

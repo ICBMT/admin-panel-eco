@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
+use App\Events\OrderStatusChanged;
 use App\Models\Order;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Enums\OrderStatus;
 use Illuminate\Validation\Rule;
-use App\Events\OrderStatusChanged;
 use Illuminate\View\View;
-
 
 class AdminOrderController extends Controller
 {
@@ -26,10 +26,10 @@ class AdminOrderController extends Controller
         $orders = Order::with(['user', 'items.product'])
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where(function (Builder $query) use ($search) {
-                    $query->where('id', 'like', '%' . $search . '%')
+                    $query->where('id', 'like', '%'.$search.'%')
                         ->orWhereHas('user', function (Builder $query) use ($search) {
-                            $query->where('name', 'like', '%' . $search . '%')
-                                ->orWhere('email', 'like', '%' . $search . '%');
+                            $query->where('name', 'like', '%'.$search.'%')
+                                ->orWhere('email', 'like', '%'.$search.'%');
                         });
                 });
             })
@@ -48,7 +48,7 @@ class AdminOrderController extends Controller
         ]);
     }
 
-    public function updateStatus(Request $request, Order $order)
+    public function updateStatus(Request $request, Order $order): RedirectResponse
     {
         $request->validate([
             'status' => ['required', Rule::enum(OrderStatus::class)],
@@ -76,7 +76,6 @@ class AdminOrderController extends Controller
         return redirect()->route('admin.orders.show', $order)
             ->with('success', 'Order status updated successfully.');
     }
-
 
     public function show(Order $order): View
     {

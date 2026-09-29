@@ -73,7 +73,7 @@ it('lists, searches and filters orders in the admin panel', function () {
 
     $this->get(route('admin.orders.index'))
         ->assertOk()
-        ->assertSee('#ORD-' . str_pad((string) $match->id, 4, '0', STR_PAD_LEFT))
+        ->assertSee('#ORD-'.str_pad((string) $match->id, 4, '0', STR_PAD_LEFT))
         ->assertSee('Wade Warren');
 
     $this->get(route('admin.orders.index', ['search' => 'eleanor']))

@@ -117,7 +117,7 @@ class DemoStoreSeeder extends Seeder
             }
         }
 
-        $this->command?->info('Demo store data seeded.');
-        $this->command?->warn("Admin login: {$admin->email} / password");
+        $this->command->info('Demo store data seeded.');
+        $this->command->warn("Admin login: {$admin->email} / password");
     }
 }

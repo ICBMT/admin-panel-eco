@@ -85,7 +85,7 @@ class AdminController extends Controller
                     round($cardRevenue, 2),
                     round($totalCancelled, 2),
                 ],
-                'total' => '$' . number_format($codRevenue + $cardRevenue + $totalCancelled, 0),
+                'total' => '$'.number_format($codRevenue + $cardRevenue + $totalCancelled, 0),
             ],
             'recentOrders' => $recentOrders,
             'overview' => [
@@ -160,19 +160,21 @@ class AdminController extends Controller
         $orders = Order::whereBetween('created_at', [$start, $end])
             ->get(['total', 'status', 'created_at']);
 
+        /** @var Collection<string, Collection<int, Order>> $days */
         $days = new Collection;
 
         for ($day = $start->copy()->startOfDay(); $day->lte($end->copy()->startOfDay()); $day = $day->addDay()) {
-            $days->put($day->format('Y-m-d'), new Collection);
+            /** @var Collection<int, Order> $empty */
+            $empty = new Collection;
+            $days->put($day->format('Y-m-d'), $empty);
         }
 
         foreach ($orders as $order) {
             $key = $order->created_at->format('Y-m-d');
 
-            $days->put(
-                $key,
-                $days->get($key, new Collection)->push($order),
-            );
+            /** @var Collection<int, Order> $bucket */
+            $bucket = $days->get($key, new Collection);
+            $days->put($key, $bucket->push($order));
         }
 
         return $days;

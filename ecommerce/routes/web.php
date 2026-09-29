@@ -1,18 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\AdminProductController;
-use App\Http\Controllers\AdminCategoryController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImportController;
-
-
-
+use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -85,7 +82,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/orders/{order}', [OrderController::class, 'show'])
         ->middleware(['auth', 'verified'])
         ->name('orders.show');
-        
+
     Route::get('/stripe/success', [OrderController::class, 'stripeSuccess'])
         ->middleware(['auth', 'verified'])
         ->name('stripe.success');

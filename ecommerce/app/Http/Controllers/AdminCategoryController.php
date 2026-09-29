@@ -23,8 +23,8 @@ class AdminCategoryController extends Controller
         $categories = Category::withCount('products')
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where(function (Builder $query) use ($search) {
-                    $query->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('description', 'like', '%' . $search . '%');
+                    $query->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('description', 'like', '%'.$search.'%');
                 });
             })
             ->latest()
