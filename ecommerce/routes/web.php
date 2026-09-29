@@ -5,7 +5,10 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminOrderController;
+use App\Http\Controllers\AdminProductController;
+use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\ProductImportController;
 
 
@@ -20,7 +23,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Admin product and category management
     Route::middleware('admin')->group(function () {
 
+        // Admin panel (Spark Admin UI)
+        Route::get('/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
+        Route::get('/admin/orders', [AdminOrderController::class, 'index'])
+            ->name('admin.orders.index');
+
+        Route::put('/admin/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])
+            ->name('admin.orders.update-status');
+
+        Route::get('/admin/orders/{order}', [AdminOrderController::class, 'show'])
+            ->name('admin.orders.show');
+
+        Route::get('/admin/products', [AdminProductController::class, 'index'])
+            ->name('admin.products.index');
+
+        Route::get('/admin/categories', [AdminCategoryController::class, 'index'])
+            ->name('admin.categories.index');
+
+        Route::post('/products/import', [ProductImportController::class, 'import'])
+            ->name('products.import');
+
         Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
+
         Route::post('/products', [ProductController::class, 'store'])->name('products.store');
         Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
         Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
@@ -68,24 +93,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/stripe/cancel', [OrderController::class, 'stripeCancel'])
         ->middleware(['auth', 'verified'])
         ->name('stripe.cancel');
-
-
-    // Admin orders
-    Route::get('/admin/orders', [AdminOrderController::class, 'index'])
-        ->middleware(['auth', 'verified', 'admin'])
-        ->name('admin.orders.index');
-
-    Route::put('/admin/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])
-        ->middleware(['auth', 'verified', 'admin'])
-        ->name('admin.orders.update-status');
-
-    Route::get('/admin/orders/{order}', [AdminOrderController::class, 'show'])
-        ->middleware(['auth', 'verified', 'admin'])
-        ->name('admin.orders.show');
-
-    Route::post('/products/import', [ProductImportController::class, 'import'])
-    ->middleware(['auth', 'verified', 'admin'])
-    ->name('products.import');
 
 });
 

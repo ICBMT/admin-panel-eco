@@ -23,13 +23,13 @@ class ProductImportController extends Controller
         } 
         catch (ValidationException $e) {
             return redirect()
-                ->route('products.index')
+                ->route('admin.products.index')
                 ->withErrors($e->errors())
                 ->withInput();
         }
 
         return redirect()
-            ->route('products.index')
+            ->route('admin.products.index')
             ->with('success', 'Products imported successfully.');
     }
 }
